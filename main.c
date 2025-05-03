@@ -4,7 +4,7 @@
 static char input[100] = "look around";
 static bool getInput(void)
 {
-   printf("\n--> ");
+   printf("\ninput> ");
    return fgets(input, sizeof input, stdin) != NULL;
 }
 int main()
