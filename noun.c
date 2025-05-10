@@ -3,10 +3,22 @@
 #include <string.h>
 #include "object.h"
 #include "misc.h"
+
 static bool objectHasTag(OBJECT *obj, const char *noun)
 {
-   return noun != NULL && *noun != '\0' && strcmp(noun, obj->tag) == 0;
+   if (noun != NULL && *noun != '\0')
+   {
+      const char **tag;
+      for (tag = obj->tags; *tag != NULL; tag++)
+      {
+         if (strcmp(*tag, noun) == 0) return true;
+      }
+   }
+   return false;
 }
+
+static OBJECT ambiguousNoun;
+
 static OBJECT *getObject(const char *noun, OBJECT *from, DISTANCE maxDistance)
 {
    OBJECT *obj, *res = NULL;
@@ -14,11 +26,12 @@ static OBJECT *getObject(const char *noun, OBJECT *from, DISTANCE maxDistance)
    {
       if (objectHasTag(obj, noun) && getDistance(from, obj) <= maxDistance)
       {
-         res = obj;
+         res = res == NULL ? obj : &ambiguousNoun;
       }
    }
    return res;
 }
+
 OBJECT *getVisible(const char *intention, const char *noun)
 {
    OBJECT *obj = getObject(noun, player, distOverthere);
@@ -33,8 +46,14 @@ OBJECT *getVisible(const char *intention, const char *noun)
          printf("You don't see any %s here.\n", noun);
       }
    }
+   else if (obj == &ambiguousNoun)
+   {
+      printf("Please be specific about which %s you mean.\n", noun);
+      obj = NULL;
+   }
    return obj;
 }
+
 OBJECT *getPossession(OBJECT *from, const char *verb, const char *noun)
 {
    OBJECT *obj = NULL;
@@ -57,6 +76,12 @@ OBJECT *getPossession(OBJECT *from, const char *verb, const char *noun)
          printf("There appears to be no %s you can get from %s.\n",
                 noun, from->description);
       }
+   }
+   else if (obj == &ambiguousNoun)
+   {
+      printf("Please be specific about which %s you want to %s.\n",
+             noun, verb);
+      obj = NULL;
    }
    else if (obj == from)
    {
